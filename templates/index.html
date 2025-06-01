@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 对话系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: #4f46e5;
+            color: white;
+            margin-right: 10px;
+        }
+        
+        .message.assistant .message-content {
+            background: white;
+            border: 1px solid #e2e8f0;
+            margin-left: 10px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .avatar.user {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+        
+        .avatar.assistant {
+            background: #10b981;
+            color: white;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            transition: border-color 0.3s;
+        }
+        
+        .message-input:focus {
+            border-color: #4f46e5;
+        }
+        
+        .send-button {
+            width: 44px;
+            height: 44px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            background: #3730a3;
+            transform: scale(1.05);
+        }
+        
+        .send-button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .clear-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        
+        .clear-button:hover {
+            background: #dc2626;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-style: italic;
+        }
+        
+        .loading-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+        
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            background: #64748b;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            color: #64748b;
+            margin: 50px 0;
+        }
+        
+        .welcome-message h3 {
+            margin-bottom: 10px;
+            color: #374151;
+        }
+        
+        .model-selector {
+            display: flex;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .model-option {
+            flex: 1;
+            background: #f8fafc;
+            color: #64748b;
+            text-align: center;
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .model-option.active {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .model-option:first-child {
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        .model-status {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        .model-status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .model-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .model-status-dot.available {
+            background: #10b981;
+        }
+        
+        .model-status-dot.unavailable {
+            background: #ef4444;
+        }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <h1>AI 对话系统</h1>
+            <div class="subtitle">多模型智能助手 - 随时为您服务</div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h3>👋 欢迎使用 AI 对话系统</h3>
+                <p>请选择模型并输入您的问题，我会尽力为您提供帮助！</p>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <!-- 模型选择器 -->
+            <div class="model-selector" id="modelSelector">
+                <div class="model-option active" data-model="deepseek">DeepSeek AI</div>
+                <div class="model-option" data-model="qwen">通义千问</div>
+            </div>
+            
+            <!-- 模型状态提示 -->
+            <div class="model-status">
+                <div class="model-status-item" id="deepseekStatus">
+                    <div class="model-status-dot"></div>
+                    <span>DeepSeek</span>
+                </div>
+                <div class="model-status-item" id="qwenStatus">
+                    <div class="model-status-dot"></div>
+                    <span>通义千问</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="输入您的消息..."
+                    rows="1"
+                ></textarea>
+                <button id="sendButton" class="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                    </svg>
+                </button>
+            </div>
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <button id="clearButton" class="clear-button">清空对话</button>
+                <div style="font-size: 12px; color: #64748b;">
+                    按 Enter 发送，Shift+Enter 换行
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AIChat {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.clearButton = document.getElementById('clearButton');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.modelSelector = document.getElementById('modelSelector');
+                this.deepseekStatus = document.getElementById('deepseekStatus').querySelector('.model-status-dot');
+                this.qwenStatus = document.getElementById('qwenStatus').querySelector('.model-status-dot');
+                
+                this.sessionId = 'user_' + Date.now();
+                this.activeModel = 'deepseek'; // 默认使用 DeepSeek
+                
+                this.initEventListeners();
+                this.checkStatus();
+                this.autoResizeTextarea();
+            }
+            
+            initEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.clearButton.addEventListener('click', () => this.clearConversation());
+                
+                this.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                this.messageInput.addEventListener('input', () => {
+                    this.autoResizeTextarea();
+                });
+                
+                // 模型选择事件
+                const modelOptions = this.modelSelector.querySelectorAll('.model-option');
+                modelOptions.forEach(option => {
+                    option.addEventListener('click', () => {
+                        modelOptions.forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        this.activeModel = option.dataset.model;
+                    });
+                });
+            }
+            
+            autoResizeTextarea() {
+                this.messageInput.style.height = 'auto';
+                this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+            }
+            
+            async checkStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    const data = await response.json();
+                    
+                    // 更新 DeepSeek 状态
+                    if (data.deepseek_available) {
+                        this.deepseekStatus.classList.add('available');
+                        this.deepseekStatus.classList.remove('unavailable');
+                        this.deepseekStatus.title = 'DeepSeek API 已配置';
+                    } else {
+                        this.deepseekStatus.classList.add('unavailable');
+                        this.deepseekStatus.classList.remove('available');
+                        this.deepseekStatus.title = 'DeepSeek API 未配置';
+                    }
+                    
+                    // 更新通义千问状态
+                    if (data.qwen_available) {
+                        this.qwenStatus.classList.add('available');
+                        this.qwenStatus.classList.remove('unavailable');
+                        this.qwenStatus.title = '通义千问 API 已配置';
+                    } else {
+                        this.qwenStatus.classList.add('unavailable');
+                        this.qwenStatus.classList.remove('available');
+                        this.qwenStatus.title = '通义千问 API 未配置';
+                    }
+                    
+                    // 总体状态
+                    if (data.deepseek_available || data.qwen_available) {
+                        this.statusIndicator.style.background = '#10b981';
+                        this.statusIndicator.title = '服务正常运行中';
+                    } else {
+                        this.statusIndicator.style.background = '#ef4444';
+                        this.statusIndicator.title = '所有 API 均未配置';
+                        this.showError('请配置至少一个 API Key（DeepSeek 或通义千问）');
+                    }
+                } catch (error) {
+                    this.statusIndicator.style.background = '#ef4444';
+                    this.statusIndicator.title = '服务器连接失败';
+                }
+            }
+            
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.sendButton.disabled) return;
+                
+                // 检查当前所选模型是否可用
+                const modelStatusDot = this.activeModel === 'deepseek' ? this.deepseekStatus : this.qwenStatus;
+                if (!modelStatusDot.classList.contains('available')) {
+                    this.showError(`${this.activeModel === 'deepseek' ? 'DeepSeek' : '通义千问'} API 未配置，请选择其他模型或配置 API Key`);
+                    return;
+                }
+                
+                // 显示用户消息
+                this.addMessage('user', message);
+                this.messageInput.value = '';
+                this.autoResizeTextarea();
+                
+                // 禁用发送按钮
+                this.sendButton.disabled = true;
+                
+                // 显示加载状态
+                const loadingElement = this.addLoadingMessage();
+                
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            session_id: this.sessionId,
+                            model_type: this.activeModel
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // 移除加载状态
+                    this.removeLoadingMessage(loadingElement);
+                    
+                    if (data.success) {
+                        this.addMessage('assistant', data.response, data.model_type);
+                    } else {
+                        this.showError(data.error || '发送消息失败');
+                    }
+                    
+                } catch (error) {
+                    this.removeLoadingMessage(loadingElement);
+                    this.showError('网络连接失败，请检查服务器状态');
+                } finally {
+                    this.sendButton.disabled = false;
+                    this.messageInput.focus();
+                }
+            }
+            
+            addMessage(role, content, modelType = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${role}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = `avatar ${role}`;
+                avatar.textContent = role === 'user' ? '你' : 'AI';
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.innerHTML = this.formatMessage(content);
+                
+                const messageTime = document.createElement('div');
+                messageTime.className = 'message-time';
+                
+                if (role === 'assistant' && modelType) {
+                    messageTime.textContent = `${new Date().toLocaleTimeString()} · ${modelType === 'deepseek' ? 'DeepSeek AI' : '通义千问'}`;
+                } else {
+                    messageTime.textContent = new Date().toLocaleTimeString();
+                }
+                
+                messageContent.appendChild(messageTime);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(messageContent);
+                
+                // 移除欢迎消息
+                const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.remove();
+                }
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            addLoadingMessage() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'message assistant loading-message';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar assistant';
+                avatar.textContent = 'AI';
+                
+                const loadingContent = document.createElement('div');
+                loadingContent.className = 'message-content';
+                loadingContent.innerHTML = `
+                    <div class="loading">
+                        ${this.activeModel === 'deepseek' ? 'DeepSeek' : '通义千问'} 正在思考中
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                `;
+                
+                loadingDiv.appendChild(avatar);
+                loadingDiv.appendChild(loadingContent);
+                this.chatMessages.appendChild(loadingDiv);
+                this.scrollToBottom();
+                
+                return loadingDiv;
+            }
+            
+            removeLoadingMessage(loadingElement) {
+                if (loadingElement && loadingElement.parentNode) {
+                    loadingElement.parentNode.removeChild(loadingElement);
+                }
+            }
+            
+            formatMessage(content) {
+                // 简单的消息格式化
+                return content
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                
+                this.chatMessages.appendChild(errorDiv);
+                this.scrollToBottom();
+                
+                // 5秒后自动移除错误消息
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 5000);
+            }
+            
+            async clearConversation() {
+                if (!confirm('确定要清空所有对话记录吗？')) return;
+                
+                try {
+                    await fetch('/api/clear', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: this.sessionId,
+                            model_type: this.activeModel
+                        })
+                    });
+                    
+                    // 清空界面
+                    this.chatMessages.innerHTML = `
+                        <div class="welcome-message">
+                            <h3>👋 欢迎使用 AI 对话系统</h3>
+                            <p>请输入您的问题，我会尽力为您提供帮助！</p>
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    this.showError('清空对话失败');
+                }
+            }
+            
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                }, 100);
+            }
+        }
+        
+        // 初始化聊天应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new AIChat();
+        });
+    </script>
+</body>
+</html>
