@@ -26,3 +26,6 @@ ENV/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 配置文件
+deepgpt_config.json

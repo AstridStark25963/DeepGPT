@@ -143,9 +143,70 @@ class QwenChat:
                 "error": f"未知错误: {str(e)}"
             }
 
+class KimiChat:
+    def __init__(self):
+        # KIMI API 配置
+        self.api_key = os.getenv('KIMI_API_KEY', '')
+        self.base_url = "https://api.moonshot.cn/v1"
+        self.model = "moonshot-v1-8k"  # KIMI的模型名称
+        
+    def chat(self, message: str, conversation_history: List[Dict] = None) -> Dict:
+        """
+        与KIMI模型进行对话
+        """
+        if not self.api_key:
+            return {
+                "success": False,
+                "error": "KIMI API Key 未配置。请设置 KIMI_API_KEY 环境变量。"
+            }
+        
+        messages = conversation_history or []
+        messages.append({"role": "user", "content": message})
+        
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": 1000
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return {
+                    "success": True,
+                    "response": result["choices"][0]["message"]["content"],
+                    "model": self.model,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"API 请求失败: {response.status_code} - {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"未知错误: {str(e)}"
+            }
+
 # 初始化 AI 客户端
 deepseek_client = DeepSeekChat()
 qwen_client = QwenChat()
+kimi_client = KimiChat()  # 添加KIMI客户端
 
 # 存储对话历史（简单内存存储，重启后清空）
 # 使用嵌套字典，第一层是会话ID，第二层是模型类型
@@ -192,6 +253,8 @@ def chat():
             result = deepseek_client.chat(message, conversation_history)
         elif model_type == 'qwen':
             result = qwen_client.chat(message, conversation_history)
+        elif model_type == 'kimi':  # 添加KIMI模型支持
+            result = kimi_client.chat(message, conversation_history)
         else:
             return jsonify({
                 "success": False,
@@ -252,14 +315,16 @@ def status():
         "status": "running",
         "deepseek_available": bool(deepseek_client.api_key),
         "qwen_available": bool(qwen_client.api_key),
+        "kimi_available": bool(kimi_client.api_key),  # 添加KIMI API状态
         "timestamp": datetime.now().isoformat()
     })
 
 if __name__ == '__main__':
-    print("🚀 AI 对话系统启动中...")
-    print("📝 请确保设置了以下环境变量:")
+    print("AI 对话系统启动中...")
+    print("请确保设置了以下环境变量:")
     print("   - DEEPSEEK_API_KEY（用于 DeepSeek AI）")
     print("   - QWEN_API_KEY（用于通义千问）")
-    print("🌐 访问 http://localhost:5000 开始对话")
+    print("   - KIMI_API_KEY（用于 KIMI）")  # 添加KIMI相关提示
+    print("访问 http://localhost:5000 开始对话")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
