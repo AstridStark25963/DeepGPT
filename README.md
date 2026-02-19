@@ -112,7 +112,6 @@ DeepGPT/
 │   │   └── script.js      # 前端交互逻辑
 │   └── images/            # 图标与头像资源
 │
-├── test_compatibility.py  # (开发用) 模型兼容性测试脚本
 └── README.md              # 项目说明文档
 ```
 
