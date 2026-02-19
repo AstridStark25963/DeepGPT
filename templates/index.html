@@ -3,75 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 对话系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- 添加Marked.js库用于Markdown渲染 -->
+    <title>DeepGPT AI 对话</title>
+    <!-- 强制不缓存 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- 注意这里加了 ?t=... -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?t={{ range(1, 10000) | random }}">
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 添加highlight.js用于代码高亮 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <button id="newChatBtn" class="new-chat-btn"><span>+</span> 新建对话</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+        <div class="sidebar-footer">
             <div class="status-indicator" id="statusIndicator"></div>
-            <h1>AI 对话系统</h1>
-            <div class="subtitle">多模型智能助手 - 随时为您服务</div>
+            <span>服务状态</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="chat-header">
+            <div class="header-info">
+                <h1 id="currentChatTitle">DeepGPT</h1>
+                <div class="model-selector" id="modelSelector">
+                    <!-- 确保 data-model 属性准确无误 -->
+                    <div class="model-option active" data-model="deepseek">DeepSeek</div>
+                    <div class="model-option" data-model="qwen">千问</div>
+                    <div class="model-option" data-model="kimi">KIMI</div>
+                </div>
+            </div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="welcome-message">
-                <h3>👋 欢迎使用 AI 对话系统</h3>
-                <p>请选择模型并输入您的问题，我会尽力为您提供帮助！</p>
+                <h3>👋 欢迎使用 DeepGPT</h3>
+                <p>选择模型，开始新的对话。</p>
             </div>
         </div>
         
-        <div class="chat-input">
-            <!-- 模型选择器 -->
-            <div class="model-selector" id="modelSelector">
-                <div class="model-option active" data-model="deepseek">DeepSeek AI</div>
-                <div class="model-option" data-model="qwen">通义千问</div>
-                <div class="model-option" data-model="kimi">KIMI</div>
-            </div>
-            
-            <!-- 模型状态提示 -->
-            <div class="model-status">
-                <div class="model-status-item" id="deepseekStatus">
-                    <div class="model-status-dot"></div>
-                    <span>DeepSeek</span>
-                </div>
-                <div class="model-status-item" id="qwenStatus">
-                    <div class="model-status-dot"></div>
-                    <span>通义千问</span>
-                </div>
-                <div class="model-status-item" id="kimiStatus">
-                    <div class="model-status-dot"></div>
-                    <span>KIMI</span>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                <textarea 
-                    id="messageInput" 
-                    class="message-input" 
-                    placeholder="输入您的消息..."
-                    rows="1"
-                ></textarea>
-                <button id="sendButton" class="send-button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
-                    </svg>
-                </button>
-            </div>
-            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <button id="clearButton" class="clear-button">清空对话</button>
-                <div style="font-size: 12px; color: #64748b;">
-                    按 Enter 发送，Shift+Enter 换行
-                </div>
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <textarea id="messageInput" placeholder="输入消息..." rows="1"></textarea>
+                <button id="sendButton" class="send-button">🚀</button>
             </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- 强制不缓存 JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}?t={{ range(1, 10000) | random }}"></script>
 </body>
 </html>
