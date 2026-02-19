@@ -1,21 +1,28 @@
 # DeepGPT
 
-![DeepGPT](https://img.shields.io/badge/DeepGPT-v0.2.0-blue)
+![DeepGPT](https://img.shields.io/badge/DeepGPT-v0.3.0-blue)
 ![Python](https://img.shields.io/badge/Python-3.7+-green)
 ![Flask](https://img.shields.io/badge/Flask-2.3+-red)
 
-DeepGPT 是一个集成多种大型语言模型的聊天应用程序，提供简单易用的 Web 界面，支持多模型切换和并行对比，让用户可以方便地与不同的 AI 模型进行对话交流。
+DeepGPT 是一个**上下文感知的混合模型对话系统**，允许你在同一个对话流中无缝切换不同的 AI 模型（DeepSeek、Qwen、Kimi）。它通过智能的上下文隔离机制，让多个模型像“专家评审团”一样协同工作，共同完成复杂的对话任务。
 
-## 🌟 特性
+## 🌟 核心特性 (v0.3.0)
 
-- 🚀 简洁美观的用户界面
-- 🔄 实时对话体验
-- 🔀 支持多种 AI 大模型（DeepSeek、通义千问、KIMI）
-- 📊 多模型并行对比功能，同时查看三个模型的回答
-- ✨ Markdown 语法渲染支持，包括代码高亮
-- 📝 完整的对话历史记录
-- 🔧 简单易用的 JSON 配置
-- 💨 快速响应，流畅体验
+- 🧠 **混合专家协作 (MoE-like Experience)**：
+    - 支持在单次对话中随意切换模型（例如：DeepSeek 写代码 -> Qwen 润色 -> Kimi 总结）。
+    - 模型间共享上下文记忆，且不会发生身份混淆（通过 System Prompt 注入与历史标记技术实现）。
+- 💾 **会话持久化**：
+    - 基于 SQLite 的本地数据库，自动保存所有对话历史。
+    - 支持创建新会话、切换历史会话、删除会话。
+    - 页面刷新或重启程序后，聊天记录依然存在。
+- 🎭 **动态身份识别**：
+    - 聊天界面会根据实际生成回复的模型显示对应的头像（DeepSeek/Qwen/Kimi），清晰展示对话流的贡献者。
+- 🚀 **简洁美观的 Web UI**：
+    - 类似 ChatGPT 的侧边栏会话管理。
+    - 完整的 Markdown 渲染与代码高亮支持。
+- 🔧 **稳健的错误处理**：
+    - 自动清洗 Emoji 等特殊字符，防止 API 兼容性报错。
+    - 数据库自动初始化，开箱即用。
 
 ## 📥 安装
 
@@ -41,13 +48,13 @@ pip install -r requirements.txt
 
 3. 配置 API 密钥
 
-创建一个 `deepgpt_config.json` 文件，格式如下：
+在项目根目录创建一个 `deepgpt_config.json` 文件，格式如下：
 
 ```json
 {
-  "DEEPSEEK_API_KEY": "your_deepseek_api_key",
-  "QWEN_API_KEY": "your_qwen_api_key",
-  "KIMI_API_KEY": "your_kimi_api_key"
+  "DEEPSEEK_API_KEY": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "QWEN_API_KEY": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "KIMI_API_KEY": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 ```
 
@@ -59,58 +66,59 @@ pip install -r requirements.txt
 python main.py
 ```
 
-2. 应用程序将自动打开窗口，显示聊天界面
+2. 应用程序将自动打开窗口（或浏览器访问 `http://localhost:5000`）。
 
-3. 使用方式有两种：
-
-   **单模型对话**：在开始对话前，选择要使用的模型（DeepSeek、千问或KIMI），然后输入问题并发送。
-   
-   **多模型对比**：直接输入问题，三个模型将同时生成回答，显示在各自的区域，方便您进行对比分析。
+3. **混合会话玩法**：
+   - **开始**：选择 **DeepSeek**，输入 "帮我写一个 Python 爬虫脚本"。
+   - **接力**：点击顶部模型栏切换到 **Qwen**，输入 "请评价一下这段代码的安全性"。
+   - **总结**：点击切换到 **Kimi**，输入 "把刚才的代码和评价整理成一份 Markdown 文档"。
+   - *你会发现，三个模型在一个对话流中完美配合，且清楚知道上下文是谁生成的。*
 
 ## 🤖 支持的模型
 
-### 当前支持
-
-- **DeepSeek AI**：来自 DeepSeek 的强大语言模型
-- **通义千问**：阿里云的智能对话引擎
-- **KIMI**：月之暗面推出的KIMI大模型
+- **DeepSeek V3**：擅长逻辑推理、代码生成。
+- **通义千问 (Qwen-Turbo)**：擅长中文理解、创意写作、情感分析。
+- **Kimi (Moonshot-v1)**：擅长长上下文阅读、归纳总结。
 
 ## 🛠️ 开发计划
 
-我们正在计划添加以下功能：
-
-- [ ] 封装到 Electron 框架（或其他桌面应用框架）
+- [ ] 流式输出 (Streaming Response) - 打字机效果
+- [ ] AI 自动生成会话标题
 - [ ] 界面主题切换（明/暗模式）
+- [ ] 文件上传与 RAG (检索增强生成) 支持
+- [ ] 封装到 Electron 框架（或其他桌面应用框架）
 - [ ] 用户认证系统与会话管理
-- [ ] 增强对话历史功能
-- [ ] 文件上传与处理支持
-- [ ] 图像生成与处理支持
+- [ ] 单对话重新生成、对话可复制功能
+- [ ] 聊天重命名、置顶（收藏）、导出
 
 ## 🔧 项目结构
 
 ```
 DeepGPT/
 │
-├── main.py                # 主程序入口
-├── app.py                 # Flask 后端应用
-├── deepgpt_config.json    # 配置文件
+├── main.py                # 桌面应用入口 (PyWebview)
+├── app.py                 # Flask 后端核心逻辑 & API 路由
+├── deepgpt_config.json    # API 密钥配置文件 (需手动创建)
+├── chat_history.db        # SQLite 数据库 (自动生成)
 ├── requirements.txt       # Python 依赖项
 │
 ├── templates/             # HTML 模板
-│   └── index.html         # 主页面
+│   └── index.html         # 主页面结构
 │
 ├── static/                # 静态资源
 │   ├── css/
 │   │   └── styles.css     # 样式表
-│   └── js/
-│       └── script.js      # JavaScript 脚本
+│   ├── js/
+│   │   └── script.js      # 前端交互逻辑
+│   └── images/            # 图标与头像资源
 │
+├── test_compatibility.py  # (开发用) 模型兼容性测试脚本
 └── README.md              # 项目说明文档
 ```
 
 ## 🤝 贡献
 
-欢迎提交 Pull Request 或创建 Issue 来帮助改进这个项目！
+欢迎提交 Pull Request 或创建 Issue 来帮助改进这个项目！特别是如果你发现了其他模型间的有趣互动或兼容性问题。
 
 ## 📃 许可证
 
